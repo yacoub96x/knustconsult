@@ -1,0 +1,49 @@
+// Prisma schema for Lecturer-Student Consultation Booking System (KnustConsult)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  name         String
+  email        String             @unique
+  passwordHash String
+  role         String             // "LECTURER" | "STUDENT"
+  department   String?
+  createdAt    DateTime           @default(now())
+  
+  // Relations
+  slots        AvailabilitySlot[] @relation("LecturerSlots")
+  bookings     Booking[]          @relation("StudentBookings")
+}
+
+model AvailabilitySlot {
+  id          String   @id @default(uuid())
+  lecturerId  String
+  lecturer    User     @relation("LecturerSlots", fields: [lecturerId], references: [id], onDelete: Cascade)
+  date        String   // Formatted as YYYY-MM-DD
+  startTime   String   // Formatted as HH:mm (24hr)
+  endTime     String   // Formatted as HH:mm (24hr)
+  status      String   @default("OPEN") // "OPEN" | "BOOKED" | "CANCELLED"
+  isRecurring Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  booking     Booking?
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  slotId    String   @unique // Unique constraint enforces 1 booking per slot at DB level
+  slot      AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
+  status    String   @default("CONFIRMED") // "CONFIRMED" | "CANCELLED"
+  createdAt DateTime @default(now())
+}
