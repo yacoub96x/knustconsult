@@ -45,7 +45,7 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 py-12 bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <div className="w-full max-w-md">
-        
+
         {/* Card Container */}
         <div className="bg-white dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-xl dark:shadow-2xl backdrop-blur-xl">
           <div className="text-center mb-6">
@@ -72,22 +72,20 @@ export const RegisterPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRole('STUDENT')}
-                className={`py-2.5 px-3 rounded-xl font-bold text-xs transition ${
-                  role === 'STUDENT'
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs transition ${role === 'STUDENT'
                     ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
                     : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 🎓 Student
               </button>
               <button
                 type="button"
                 onClick={() => setRole('LECTURER')}
-                className={`py-2.5 px-3 rounded-xl font-bold text-xs transition ${
-                  role === 'LECTURER'
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs transition ${role === 'LECTURER'
                     ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
                     : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 👨‍🏫 Lecturer
               </button>

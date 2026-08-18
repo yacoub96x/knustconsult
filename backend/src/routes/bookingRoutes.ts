@@ -20,7 +20,7 @@ router.post('/', requireAuth, requireRole('STUDENT'), async (req: AuthenticatedR
     const booking = await bookingService.bookSlot(slotId, studentId);
 
     return res.status(201).json({
-      message: 'Consultation slot booked successfully',
+      message: 'Booking request submitted — awaiting lecturer approval',
       booking,
     });
   } catch (err: any) {
@@ -42,7 +42,37 @@ router.get('/mine', requireAuth, requireRole('STUDENT'), async (req: Authenticat
   }
 });
 
-// DELETE /api/bookings/:id (Student only)
+// POST /api/bookings/:id/approve (Lecturer only)
+router.post('/:id/approve', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const bookingId = req.params.id as string;
+    const lecturerId = req.user!.id;
+
+    const result = await bookingService.approveBooking(bookingId, lecturerId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Error approving booking:', err);
+    const statusCode = err.statusCode || 400;
+    return res.status(statusCode).json({ error: err.message || 'Failed to approve booking' });
+  }
+});
+
+// POST /api/bookings/:id/reject (Lecturer only)
+router.post('/:id/reject', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const bookingId = req.params.id as string;
+    const lecturerId = req.user!.id;
+
+    const result = await bookingService.rejectBooking(bookingId, lecturerId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Error rejecting booking:', err);
+    const statusCode = err.statusCode || 400;
+    return res.status(statusCode).json({ error: err.message || 'Failed to reject booking' });
+  }
+});
+
+// DELETE /api/bookings/:id (Student only — only for CONFIRMED bookings)
 router.delete('/:id', requireAuth, requireRole('STUDENT'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const bookingId = req.params.id as string;

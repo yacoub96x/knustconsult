@@ -1,6 +1,6 @@
 export type Role = 'LECTURER' | 'STUDENT';
-export type SlotStatus = 'OPEN' | 'BOOKED' | 'CANCELLED';
-export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
+export type SlotStatus = 'OPEN' | 'PENDING' | 'BOOKED' | 'CANCELLED';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED';
 
 export interface User {
   id: string;

@@ -30,91 +30,125 @@ interface NotificationDetails {
   endTime: string;
 }
 
+async function sendMail(to: string | string[], subject: string, text: string): Promise<void> {
+  if (!transporter) {
+    const recipients = Array.isArray(to) ? to.join(', ') : to;
+    console.log('\n✉️  [OFFLINE EMAIL LOG]');
+    console.log(`TO      : ${recipients}`);
+    console.log(`SUBJECT : ${subject}`);
+    console.log(`BODY    :\n${text.trim()}`);
+    console.log('---------------------------------------------------\n');
+    return;
+  }
+
+  try {
+    await transporter.sendMail({ from: smtpFrom, to, subject, text });
+    const recipients = Array.isArray(to) ? to.join(' & ') : to;
+    console.log(`✅ Email sent to ${recipients}`);
+  } catch (err) {
+    console.error('⚠️ Failed to send email, logging instead:', err);
+    console.log(`[OFFLINE FALLBACK] ${subject}`);
+  }
+}
+
 export const emailService = {
-  async sendBookingConfirmation(details: NotificationDetails): Promise<void> {
-    const subject = `[KnustConsult] Consultation Confirmed: ${details.lecturerName} & ${details.studentName}`;
-    const textContent = `
-Hello,
+  /**
+   * Sent to the LECTURER when a student submits a booking request (PENDING state).
+   */
+  async sendBookingRequest(details: NotificationDetails): Promise<void> {
+    const subject = `[KnustConsult] New Appointment Request — Action Required`;
+    const text = `
+Hello ${details.lecturerName},
 
-A consultation session has been successfully booked.
+A student has submitted an appointment request that requires your approval.
 
-Session Details:
-- Lecturer: ${details.lecturerName} (${details.lecturerEmail})
-- Student: ${details.studentName} (${details.studentEmail})
-- Date: ${details.date}
-- Time: ${details.startTime} - ${details.endTime}
+Request Details:
+- Student : ${details.studentName} (${details.studentEmail})
+- Date    : ${details.date}
+- Time    : ${details.startTime} - ${details.endTime}
+
+Please log in to KnustConsult to approve or decline this request.
 
 Best regards,
 KnustConsult Academic System
 `;
-
-    if (!transporter) {
-      console.log('\n✉️  [OFFLINE EMAIL LOG - BOOKING CONFIRMATION]');
-      console.log(`TO (Student) : ${details.studentEmail}`);
-      console.log(`TO (Lecturer): ${details.lecturerEmail}`);
-      console.log(`SUBJECT      : ${subject}`);
-      console.log(`BODY         :\n${textContent.trim()}`);
-      console.log('---------------------------------------------------\n');
-      return;
-    }
-
-    try {
-      await transporter.sendMail({
-        from: smtpFrom,
-        to: [details.studentEmail, details.lecturerEmail],
-        subject,
-        text: textContent,
-      });
-      console.log(`✅ Confirmation email sent to ${details.studentEmail} & ${details.lecturerEmail}`);
-    } catch (err) {
-      console.error('⚠️ Failed to send confirmation email, logging instead:', err);
-      console.log(`[OFFLINE FALLBACK] ${subject} for ${details.studentEmail}`);
-    }
+    await sendMail(details.lecturerEmail, subject, text);
   },
 
+  /**
+   * Sent to the STUDENT when their booking request is approved by the lecturer.
+   */
+  async sendBookingApproved(details: NotificationDetails): Promise<void> {
+    const subject = `[KnustConsult] Appointment Confirmed — ${details.lecturerName}`;
+    const text = `
+Hello ${details.studentName},
+
+Great news! Your appointment request has been approved.
+
+Appointment Details:
+- Lecturer : ${details.lecturerName} (${details.lecturerEmail})
+- Date     : ${details.date}
+- Time     : ${details.startTime} - ${details.endTime}
+
+Please be on time. Visit KnustConsult if you need to cancel.
+
+Best regards,
+KnustConsult Academic System
+`;
+    await sendMail(details.studentEmail, subject, text);
+  },
+
+  /**
+   * Sent to the STUDENT when their booking request is rejected by the lecturer.
+   */
+  async sendBookingRejected(details: NotificationDetails): Promise<void> {
+    const subject = `[KnustConsult] Appointment Request Declined`;
+    const text = `
+Hello ${details.studentName},
+
+Unfortunately, your appointment request with ${details.lecturerName} has been declined.
+
+Requested Details:
+- Date : ${details.date}
+- Time : ${details.startTime} - ${details.endTime}
+
+The slot is now open again — you are welcome to request another available time on KnustConsult.
+
+Best regards,
+KnustConsult Academic System
+`;
+    await sendMail(details.studentEmail, subject, text);
+  },
+
+  /**
+   * Sent to both parties when a CONFIRMED booking is cancelled.
+   */
   async sendBookingCancellation(
     details: NotificationDetails,
     cancelledByRole: 'STUDENT' | 'LECTURER'
   ): Promise<void> {
     const subject = `[KnustConsult] Consultation Cancelled: ${details.date} (${details.startTime} - ${details.endTime})`;
-    const textContent = `
+    const text = `
 Hello,
 
 The consultation session scheduled for ${details.date} between ${details.lecturerName} and ${details.studentName} has been CANCELLED by the ${cancelledByRole.toLowerCase()}.
 
 Session Details:
-- Lecturer: ${details.lecturerName} (${details.lecturerEmail})
-- Student: ${details.studentName} (${details.studentEmail})
-- Date: ${details.date}
-- Time: ${details.startTime} - ${details.endTime}
+- Lecturer : ${details.lecturerName} (${details.lecturerEmail})
+- Student  : ${details.studentName} (${details.studentEmail})
+- Date     : ${details.date}
+- Time     : ${details.startTime} - ${details.endTime}
 
 If this was a mistake or you need to reschedule, please visit the KnustConsult portal.
 
 Best regards,
 KnustConsult Academic System
 `;
+    await sendMail([details.studentEmail, details.lecturerEmail], subject, text);
+  },
 
-    if (!transporter) {
-      console.log('\n✉️  [OFFLINE EMAIL LOG - BOOKING CANCELLATION]');
-      console.log(`TO (Student) : ${details.studentEmail}`);
-      console.log(`TO (Lecturer): ${details.lecturerEmail}`);
-      console.log(`SUBJECT      : ${subject}`);
-      console.log(`BODY         :\n${textContent.trim()}`);
-      console.log('---------------------------------------------------\n');
-      return;
-    }
-
-    try {
-      await transporter.sendMail({
-        from: smtpFrom,
-        to: [details.studentEmail, details.lecturerEmail],
-        subject,
-        text: textContent,
-      });
-      console.log(`✅ Cancellation email sent to ${details.studentEmail} & ${details.lecturerEmail}`);
-    } catch (err) {
-      console.error('⚠️ Failed to send cancellation email, logging instead:', err);
-      console.log(`[OFFLINE FALLBACK] ${subject} for ${details.studentEmail}`);
-    }
+  /** @deprecated Use sendBookingApproved instead — kept for backward compatibility */
+  async sendBookingConfirmation(details: NotificationDetails): Promise<void> {
+    return this.sendBookingApproved(details);
   },
 };

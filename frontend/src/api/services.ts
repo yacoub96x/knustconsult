@@ -67,4 +67,14 @@ export const bookingApi = {
     const res = await apiClient.delete<{ message: string }>(`/bookings/${bookingId}`);
     return res.data;
   },
+
+  async approveBooking(bookingId: string): Promise<{ message: string }> {
+    const res = await apiClient.post<{ message: string }>(`/bookings/${bookingId}/approve`);
+    return res.data;
+  },
+
+  async rejectBooking(bookingId: string): Promise<{ message: string }> {
+    const res = await apiClient.post<{ message: string }>(`/bookings/${bookingId}/reject`);
+    return res.data;
+  },
 };

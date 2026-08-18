@@ -30,7 +30,7 @@ model AvailabilitySlot {
   date        String   // Formatted as YYYY-MM-DD
   startTime   String   // Formatted as HH:mm (24hr)
   endTime     String   // Formatted as HH:mm (24hr)
-  status      String   @default("OPEN") // "OPEN" | "BOOKED" | "CANCELLED"
+  status      String   @default("OPEN") // "OPEN" | "PENDING" | "BOOKED" | "CANCELLED"
   isRecurring Boolean  @default(false)
   createdAt   DateTime @default(now())
 
@@ -44,6 +44,6 @@ model Booking {
   slot      AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
   studentId String
   student   User     @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
-  status    String   @default("CONFIRMED") // "CONFIRMED" | "CANCELLED"
+  status    String   @default("PENDING") // "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED"
   createdAt DateTime @default(now())
 }

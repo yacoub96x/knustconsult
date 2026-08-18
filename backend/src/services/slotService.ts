@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 export const SlotStatus = {
   OPEN: 'OPEN',
+  PENDING: 'PENDING',
   BOOKED: 'BOOKED',
   CANCELLED: 'CANCELLED',
 } as const;
@@ -32,7 +33,7 @@ export const slotService = {
       where: {
         lecturerId,
         date,
-        status: { in: [SlotStatus.OPEN, SlotStatus.BOOKED] },
+        status: { in: [SlotStatus.OPEN, SlotStatus.PENDING, SlotStatus.BOOKED] },
         OR: [
           {
             startTime: { lte: startTime },
@@ -145,9 +146,11 @@ export const slotService = {
       });
 
       if (slot.booking) {
+        // Pending bookings get REJECTED when the slot is force-cancelled
+        const newBookingStatus = slot.booking.status === 'PENDING' ? 'REJECTED' : 'CANCELLED';
         await tx.booking.update({
           where: { id: slot.booking.id },
-          data: { status: 'CANCELLED' },
+          data: { status: newBookingStatus },
         });
       }
     });

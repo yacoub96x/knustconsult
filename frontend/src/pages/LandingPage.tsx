@@ -5,8 +5,8 @@ import { GraduationCap, Calendar, ShieldCheck, Mail, ArrowRight, UserCheck, Chec
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-white min-h-screen transition-colors duration-300">
-      
+    <div className="bg-gray-100 dark:bg-zinc-950 text-zinc-900 dark:text-white min-h-screen transition-colors duration-300">
+
       {/* Container Scroll Hero Section */}
       <ContainerScroll
         titleComponent={
@@ -15,7 +15,7 @@ export const LandingPage: React.FC = () => {
               <GraduationCap className="w-4 h-4" />
               <span>Academic Office Hours Reimagined</span>
             </div>
-            
+
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-white max-w-4xl mx-auto leading-tight">
               Eliminate the guesswork of <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600">

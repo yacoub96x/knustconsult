@@ -98,8 +98,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
     <div className="space-y-4">
       {/* Week Navigation Toolbar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
             <CalendarIcon className="w-5 h-5" />
           </div>
           <div>
@@ -115,7 +115,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setWeekOffset(prev => prev - 1)}
-            className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
+            className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition shadow-sm"
             title="Previous Week"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -123,18 +123,17 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
           <button
             onClick={() => setWeekOffset(0)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
-              weekOffset === 0
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${weekOffset === 0
                 ? 'bg-amber-500 text-zinc-950 border-amber-500 shadow-sm'
                 : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
-            }`}
+              }`}
           >
             Current Week
           </button>
 
           <button
             onClick={() => setWeekOffset(prev => prev + 1)}
-            className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition"
+            className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition shadow-sm"
             title="Next Week"
           >
             <ChevronRight className="w-4 h-4" />
@@ -148,11 +147,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
           <button
             key={day.isoDate}
             onClick={() => setSelectedMobileDayIndex(idx)}
-            className={`flex-1 min-w-[70px] py-2 px-1 rounded-xl border text-center transition ${
-              selectedMobileDayIndex === idx
+            className={`flex-1 min-w-[70px] py-2 px-1 rounded-xl border text-center transition ${selectedMobileDayIndex === idx
                 ? 'bg-amber-500 text-zinc-950 border-amber-500 font-extrabold shadow-md'
                 : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400'
-            }`}
+              }`}
           >
             <p className="text-[10px] font-mono tracking-wider">{day.dayName}</p>
             <p className="text-xs font-bold">{day.formattedShort.split(' ')[1]}</p>
@@ -162,9 +160,9 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
       {/* Grid Container - Desktop (Full 7 columns) & Mobile (Selected day view) */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-        
+
         {/* Desktop Header Row */}
-        <div className="hidden sm:grid grid-cols-8 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/80">
+        <div className="hidden sm:grid grid-cols-8 border-b border-zinc-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-950/80">
           <div className="p-3 text-center text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 border-r border-zinc-200 dark:border-zinc-800 flex items-center justify-center">
             TIME
           </div>
@@ -173,7 +171,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
               key={day.isoDate}
               className="p-3 text-center border-r border-zinc-200 dark:border-zinc-800 last:border-r-0 space-y-0.5"
             >
-              <span className="block text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase">
+              <span className="block text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                 {day.dayName}
               </span>
               <span className="block text-xs font-bold text-zinc-800 dark:text-zinc-200">
@@ -186,10 +184,12 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         {/* Desktop Timetable Rows */}
         <div className="hidden sm:block divide-y divide-zinc-200 dark:divide-zinc-800">
           {allTimeRows.map(time => (
-            <div key={time} className="grid grid-cols-8 min-h-[64px]">
-              {/* Time Label Column */}
-              <div className="p-2 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/40 flex items-center justify-center">
-                <SplitFlapTime time={time} size="sm" />
+            <div key={time} className="grid grid-cols-8 min-h-[60px]">
+              {/* Clean Text Time Label Column (No black & gold boxes!) */}
+              <div className="p-2 border-r border-zinc-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40 flex items-center justify-center">
+                <span className="text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">
+                  {time}
+                </span>
               </div>
 
               {/* Day Cells */}
@@ -204,33 +204,31 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                   <div
                     key={day.isoDate}
                     onClick={() => handleCellClick(day.isoDate, time, slot)}
-                    className={`p-2 border-r border-zinc-200 dark:border-zinc-800 last:border-r-0 flex flex-col justify-between transition-all ${
-                      !slot
+                    className={`p-2 border-r border-zinc-200/80 dark:border-zinc-800/80 last:border-r-0 flex flex-col justify-between transition-all ${!slot
                         ? mode === 'LECTURER'
                           ? 'hover:bg-amber-500/5 cursor-pointer group'
                           : 'bg-zinc-50/20 dark:bg-zinc-950/20'
                         : isOpen
-                        ? mode === 'STUDENT' || mode === 'LECTURER'
-                          ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 cursor-pointer'
-                          : 'bg-amber-500/10'
-                        : isBooked
-                        ? mode === 'LECTURER'
-                          ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 cursor-pointer'
-                          : 'bg-emerald-500/10'
-                        : 'bg-zinc-100/50 dark:bg-zinc-950/50 opacity-40 cursor-not-allowed'
-                    }`}
+                          ? mode === 'STUDENT' || mode === 'LECTURER'
+                            ? 'bg-gradient-to-br from-amber-500/15 via-amber-500/10 to-transparent hover:bg-amber-500/25 border-amber-500/40 cursor-pointer shadow-sm'
+                            : 'bg-amber-500/10'
+                          : isBooked
+                            ? mode === 'LECTURER'
+                              ? 'bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-transparent hover:bg-emerald-500/25 border-emerald-500/40 cursor-pointer shadow-sm'
+                              : 'bg-emerald-500/10'
+                            : 'bg-zinc-100/50 dark:bg-zinc-950/50 opacity-40 cursor-not-allowed'
+                      }`}
                   >
                     {slot ? (
                       <div className="space-y-1.5 h-full flex flex-col justify-between">
                         <div className="flex items-center justify-between gap-1">
                           <span
-                            className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                              isOpen
-                                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                            className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-full ${isOpen
+                                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30'
                                 : isBooked
-                                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
-                                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 border border-zinc-300 dark:border-zinc-700'
-                            }`}
+                                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500 border border-zinc-300 dark:border-zinc-700'
+                              }`}
                           >
                             {slot.status}
                           </span>
@@ -248,7 +246,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                       </div>
                     ) : mode === 'LECTURER' ? (
                       <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
                           <Plus className="w-3 h-3" /> Add
                         </span>
                       </div>
@@ -274,33 +272,33 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
               <div
                 key={time}
                 onClick={() => handleCellClick(currentDay.isoDate, time, slot)}
-                className={`p-4 flex items-center justify-between transition-all ${
-                  !slot
+                className={`p-4 flex items-center justify-between transition-all ${!slot
                     ? mode === 'LECTURER'
                       ? 'hover:bg-amber-500/5 cursor-pointer'
                       : ''
                     : isOpen
-                    ? 'bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer'
-                    : isBooked
-                    ? mode === 'LECTURER'
-                      ? 'bg-emerald-500/10 hover:bg-emerald-500/20 cursor-pointer'
-                      : 'bg-emerald-500/10'
-                    : 'bg-zinc-100/50 dark:bg-zinc-950/50 opacity-40'
-                }`}
+                      ? 'bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer'
+                      : isBooked
+                        ? mode === 'LECTURER'
+                          ? 'bg-emerald-500/10 hover:bg-emerald-500/20 cursor-pointer'
+                          : 'bg-emerald-500/10'
+                        : 'bg-zinc-100/50 dark:bg-zinc-950/50 opacity-40'
+                  }`}
               >
                 <div className="flex items-center space-x-3">
-                  <SplitFlapTime time={time} size="sm" />
+                  <span className="text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">
+                    {time}
+                  </span>
                   {slot && (
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
-                            isOpen
+                          className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${isOpen
                               ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
                               : isBooked
-                              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                              : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
-                          }`}
+                                ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
+                            }`}
                         >
                           {slot.status}
                         </span>
@@ -422,7 +420,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     setSlotToCancel(null);
                   }}
                   disabled={isActionPending}
-                  className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-md transition disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 border border-rose-200 dark:border-rose-800/80 hover:border-rose-400 dark:hover:border-rose-600 bg-transparent transition disabled:opacity-50"
                 >
                   {isActionPending ? 'Cancelling...' : 'Cancel Slot'}
                 </button>
