@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lecturerApi, bookingApi } from '../api/services';
 import { useAuth } from '../context/AuthContext';
-import { Search, Calendar, UserCheck, Building, ChevronRight, CalendarRange, Clock, Ticket, GraduationCap, Sparkles } from 'lucide-react';
+import { Search, Calendar, UserCheck, Building, ChevronRight, CalendarRange, Clock, Hourglass } from 'lucide-react';
 import { User, AvailabilitySlot, Booking } from '../types';
 import { BoardingPassTicket } from '../components/ui/BoardingPassTicket';
 import { TimetableGrid } from '../components/ui/TimetableGrid';
@@ -43,12 +43,13 @@ export const StudentDashboard: React.FC = () => {
     queryFn: bookingApi.getMyBookings,
   });
 
-  // Book slot mutation
+  // Book slot mutation — now creates a PENDING request
   const bookMutation = useMutation({
-    mutationFn: (slotId: string) => bookingApi.bookSlot(slotId),
+    mutationFn: ({ slotId, subject }: { slotId: string; subject?: string }) => bookingApi.bookSlot(slotId, subject),
     onSuccess: (data) => {
       const lecturerName = data.booking?.slot?.lecturer?.name || selectedLecturer?.name || 'Lecturer';
-      setToastSuccessMsg(`Consultation confirmed with ${lecturerName} for ${data.booking?.slot?.date || 'selected date'}!`);
+      // "Request sent" — not "confirmed" — because booking is now PENDING
+      setToastSuccessMsg(`Request sent to ${lecturerName} — awaiting their approval!`);
       setToastErrorMsg(null);
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['lecturer-slots', selectedLecturer?.id] });
@@ -56,13 +57,13 @@ export const StudentDashboard: React.FC = () => {
       setTimeout(() => setToastSuccessMsg(null), 5000);
     },
     onError: (err: any) => {
-      setToastErrorMsg(err.message || 'Failed to book slot');
+      setToastErrorMsg(err.message || 'Failed to submit request');
       setToastSuccessMsg(null);
       setTimeout(() => setToastErrorMsg(null), 5000);
     },
   });
 
-  // Cancel booking mutation
+  // Cancel booking mutation (only works for CONFIRMED bookings — enforced server-side)
   const cancelBookingMutation = useMutation({
     mutationFn: (bookingId: string) => bookingApi.cancelBooking(bookingId),
     onSuccess: () => {
@@ -78,11 +79,32 @@ export const StudentDashboard: React.FC = () => {
     },
   });
 
-  const activeBookings = myBookings.filter((b: Booking) => b.status === 'CONFIRMED');
+  // Delete cancelled/declined booking record mutation
+  const deleteCancelledBookingMutation = useMutation({
+    mutationFn: (bookingId: string) => bookingApi.deleteCancelledBooking(bookingId),
+    onSuccess: () => {
+      setToastSuccessMsg('Cancelled appointment record deleted.');
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      setTimeout(() => setToastSuccessMsg(null), 4000);
+    },
+    onError: (err: any) => {
+      setToastErrorMsg(err.message || 'Failed to delete record');
+      setTimeout(() => setToastErrorMsg(null), 4000);
+    },
+  });
+
+  // Categorise bookings by status
+  const confirmedBookings = myBookings.filter((b: Booking) => b.status === 'CONFIRMED');
+  const pendingBookings   = myBookings.filter((b: Booking) => b.status === 'PENDING');
+  const rejectedBookings  = myBookings.filter((b: Booking) => b.status === 'REJECTED');
   const cancelledBookings = myBookings.filter((b: Booking) => b.status === 'CANCELLED');
 
-  // Filter slots for student available list: ONLY include OPEN slots (exclude booked/cancelled)
+  // Active count for header stat (confirmed + pending are "active" in the broad sense)
+  const activeCount = confirmedBookings.length + pendingBookings.length;
+
+  // All slots from the selected lecturer (backend returns OPEN, PENDING, BOOKED)
   const allSlots: AvailabilitySlot[] = slotData?.slots || [];
+  // Only OPEN slots shown in the list view (PENDING/BOOKED already blocked visually in the grid)
   const openAvailableSlots = allSlots.filter((s: AvailabilitySlot) => s.status === 'OPEN');
 
   return (
@@ -105,9 +127,26 @@ export const StudentDashboard: React.FC = () => {
             {user?.name}
           </h1>
           {!loadingBookings && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 tabular-nums font-mono">
-              <span className="font-semibold text-zinc-700 dark:text-zinc-200">{activeBookings.length}</span>
-              {' '}{activeBookings.length === 1 ? 'active consultation' : 'active consultations'}
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 tabular-nums font-mono flex items-center gap-2 flex-wrap">
+              {confirmedBookings.length > 0 && (
+                <span>
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">{confirmedBookings.length}</span>
+                  {' '}{confirmedBookings.length === 1 ? 'confirmed consultation' : 'confirmed consultations'}
+                </span>
+              )}
+              {pendingBookings.length > 0 && (
+                <>
+                  {confirmedBookings.length > 0 && <span className="text-zinc-300 dark:text-zinc-700">•</span>}
+                  <span className="flex items-center gap-1 text-violet-600 dark:text-violet-400">
+                    <Hourglass className="w-3.5 h-3.5" />
+                    <span className="font-semibold">{pendingBookings.length}</span>
+                    {' '}{pendingBookings.length === 1 ? 'pending request' : 'pending requests'}
+                  </span>
+                </>
+              )}
+              {confirmedBookings.length === 0 && pendingBookings.length === 0 && (
+                <span>No active bookings</span>
+              )}
             </p>
           )}
         </div>
@@ -115,16 +154,16 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Left Column: My Booked Consultations (Appointment Cards) */}
+
+        {/* Left Column: My Bookings */}
         <div className="lg:col-span-5 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-500" />
-              My Booked Consultations
+              My Consultations
             </h2>
             <span className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold font-mono tabular-nums">
-              {plural(activeBookings.length, 'booking')}
+              {plural(activeCount, 'active')}
             </span>
           </div>
 
@@ -133,18 +172,18 @@ export const StudentDashboard: React.FC = () => {
               <div className="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-sm text-zinc-400 font-medium">Retrieving your consultation tickets...</p>
             </div>
-          ) : activeBookings.length === 0 && cancelledBookings.length === 0 ? (
+          ) : confirmedBookings.length === 0 && pendingBookings.length === 0 && cancelledBookings.length === 0 && rejectedBookings.length === 0 ? (
             <div className="p-10 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl space-y-3 bg-white/40 dark:bg-zinc-900/40">
               <CalendarRange className="w-8 h-8 text-amber-500/60 mx-auto" />
-              <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">No active bookings yet</p>
+              <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">No bookings yet</p>
               <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mx-auto">
-                Select a lecturer on the right to browse timetable availability and confirm your consultation.
+                Select a lecturer on the right to browse their timetable and submit a consultation request.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Confirmed Active Boarding Pass Tickets */}
-              {activeBookings.map((b: Booking) => (
+              {/* Pending Requests — distinct amber/violet treatment */}
+              {pendingBookings.map((b: Booking) => (
                 <BoardingPassTicket
                   key={b.id}
                   id={b.id}
@@ -155,9 +194,46 @@ export const StudentDashboard: React.FC = () => {
                   date={b.slot?.date || ''}
                   startTime={b.slot?.startTime || ''}
                   endTime={b.slot?.endTime || ''}
+                  subject={b.subject}
+                  status="PENDING"
+                />
+              ))}
+
+              {/* Confirmed Active Boarding Pass Tickets */}
+              {confirmedBookings.map((b: Booking) => (
+                <BoardingPassTicket
+                  key={b.id}
+                  id={b.id}
+                  participantName={b.slot?.lecturer?.name || 'Lecturer'}
+                  participantRoleLabel="Lecturer"
+                  department={b.slot?.lecturer?.department}
+                  email={b.slot?.lecturer?.email}
+                  date={b.slot?.date || ''}
+                  startTime={b.slot?.startTime || ''}
+                  endTime={b.slot?.endTime || ''}
+                  subject={b.subject}
                   status="CONFIRMED"
                   onCancel={() => cancelBookingMutation.mutate(b.id)}
                   isCancelling={cancelBookingMutation.isPending}
+                />
+              ))}
+
+              {/* Rejected Bookings */}
+              {rejectedBookings.map((b: Booking) => (
+                <BoardingPassTicket
+                  key={b.id}
+                  id={b.id}
+                  participantName={b.slot?.lecturer?.name || 'Lecturer'}
+                  participantRoleLabel="Lecturer"
+                  department={b.slot?.lecturer?.department}
+                  email={b.slot?.lecturer?.email}
+                  date={b.slot?.date || ''}
+                  startTime={b.slot?.startTime || ''}
+                  endTime={b.slot?.endTime || ''}
+                  subject={b.subject}
+                  status="REJECTED"
+                  onDelete={() => deleteCancelledBookingMutation.mutate(b.id)}
+                  isDeleting={deleteCancelledBookingMutation.isPending}
                 />
               ))}
 
@@ -173,7 +249,10 @@ export const StudentDashboard: React.FC = () => {
                   date={b.slot?.date || ''}
                   startTime={b.slot?.startTime || ''}
                   endTime={b.slot?.endTime || ''}
+                  subject={b.subject}
                   status="CANCELLED"
+                  onDelete={() => deleteCancelledBookingMutation.mutate(b.id)}
+                  isDeleting={deleteCancelledBookingMutation.isPending}
                 />
               ))}
             </div>
@@ -283,7 +362,6 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4 gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                     <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest font-mono">
                       FACULTY TIMETABLE SCHEDULE
                     </p>
@@ -332,16 +410,16 @@ export const StudentDashboard: React.FC = () => {
                   <p className="text-xs text-zinc-400">Loading timetable...</p>
                 </div>
               ) : viewMode === 'grid' ? (
-                /* Weekly Grid View */
+                /* Weekly Grid View — passes all slots (OPEN, PENDING, BOOKED) */
                 <TimetableGrid
                   slots={allSlots}
                   mode="STUDENT"
                   lecturerName={selectedLecturer.name}
-                  onBookSlot={(slotId) => bookMutation.mutate(slotId)}
+                  onBookSlot={(slotId, subject) => bookMutation.mutate({ slotId, subject })}
                   isActionPending={bookMutation.isPending}
                 />
               ) : (
-                /* Available Consultation Slots List View */
+                /* Available Slots List View — shows only OPEN slots */
                 openAvailableSlots.length === 0 ? (
                   <div className="p-8 text-center space-y-2 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/50">
                     <Clock className="w-6 h-6 text-zinc-400 dark:text-zinc-600 mx-auto" />
@@ -349,7 +427,7 @@ export const StudentDashboard: React.FC = () => {
                       No open slots available right now
                     </p>
                     <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-xs mx-auto">
-                      All published slots for this lecturer are currently booked or unavailable.
+                      All published slots for this lecturer are currently booked or pending approval.
                     </p>
                   </div>
                 ) : (
@@ -379,12 +457,12 @@ export const StudentDashboard: React.FC = () => {
                         </div>
 
                         <button
-                          onClick={() => bookMutation.mutate(slot.id)}
+                          onClick={() => bookMutation.mutate({ slotId: slot.id })}
                           disabled={bookMutation.isPending}
                           className="whitespace-nowrap flex-shrink-0 inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                         >
                           <Calendar className="w-4 h-4" />
-                          <span>Book Consultation</span>
+                          <span>Request Slot</span>
                         </button>
                       </div>
                     ))}
@@ -400,5 +478,3 @@ export const StudentDashboard: React.FC = () => {
     </div>
   );
 };
-
-

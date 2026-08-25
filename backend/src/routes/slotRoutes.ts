@@ -1,9 +1,48 @@
 import { Router, Response } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-import { createSlotSchema } from '../utils/validation.js';
+import { createSlotSchema, parseVoiceSchema, parseAudioSchema } from '../utils/validation.js';
 import { slotService } from '../services/slotService.js';
+import { voiceService } from '../services/voiceService.js';
 
 const router = Router();
+
+// POST /api/slots/parse-voice (Lecturer only)
+router.post('/parse-voice', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parseResult = parseVoiceSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: parseResult.error.issues[0].message });
+    }
+
+    const { transcript } = parseResult.data;
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    const slots = await voiceService.parseVoiceTranscript(transcript, currentDate);
+    return res.json({ slots });
+  } catch (err: any) {
+    console.error('Error parsing voice:', err);
+    return res.status(400).json({ error: err.message || 'Could not parse availability from that. Try rephrasing or enter manually.' });
+  }
+});
+
+// POST /api/slots/parse-audio (Lecturer only)
+router.post('/parse-audio', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parseResult = parseAudioSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: parseResult.error.issues[0].message });
+    }
+
+    const { audioBase64, mimeType } = parseResult.data;
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    const slots = await voiceService.parseAudio(audioBase64, mimeType, currentDate);
+    return res.json({ slots });
+  } catch (err: any) {
+    console.error('Error parsing audio:', err);
+    return res.status(400).json({ error: err.message || 'Could not parse availability from audio. Try rephrasing or enter manually.' });
+  }
+});
 
 // POST /api/slots (Lecturer only)
 router.post('/', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {

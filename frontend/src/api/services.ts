@@ -36,6 +36,16 @@ export const lecturerApi = {
 };
 
 export const slotApi = {
+  async parseVoice(transcript: string): Promise<any[]> {
+    const res = await apiClient.post<{ slots: any[] }>('/slots/parse-voice', { transcript });
+    return res.data.slots;
+  },
+
+  async parseAudio(audioBase64: string, mimeType: string): Promise<any[]> {
+    const res = await apiClient.post<{ slots: any[] }>('/slots/parse-audio', { audioBase64, mimeType });
+    return res.data.slots;
+  },
+
   async createSlot(data: CreateSlotInput): Promise<{ message: string; slot?: AvailabilitySlot; slots?: AvailabilitySlot[] }> {
     const res = await apiClient.post<{ message: string; slot?: AvailabilitySlot; slots?: AvailabilitySlot[] }>('/slots', data);
     return res.data;
@@ -53,8 +63,8 @@ export const slotApi = {
 };
 
 export const bookingApi = {
-  async bookSlot(slotId: string): Promise<{ message: string; booking: Booking }> {
-    const res = await apiClient.post<{ message: string; booking: Booking }>('/bookings', { slotId });
+  async bookSlot(slotId: string, subject?: string): Promise<{ message: string; booking: Booking }> {
+    const res = await apiClient.post<{ message: string; booking: Booking }>('/bookings', { slotId, subject });
     return res.data;
   },
 
@@ -65,6 +75,11 @@ export const bookingApi = {
 
   async cancelBooking(bookingId: string): Promise<{ message: string }> {
     const res = await apiClient.delete<{ message: string }>(`/bookings/${bookingId}`);
+    return res.data;
+  },
+
+  async deleteCancelledBooking(bookingId: string): Promise<{ message: string }> {
+    const res = await apiClient.delete<{ message: string }>(`/bookings/${bookingId}/clear`);
     return res.data;
   },
 

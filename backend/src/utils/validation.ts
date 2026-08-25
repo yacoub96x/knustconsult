@@ -25,4 +25,25 @@ export const createSlotSchema = z.object({
 
 export const bookSlotSchema = z.object({
   slotId: z.string().min(1, 'Slot ID is required'),
+  subject: z.string().trim().max(255, 'Subject cannot exceed 255 characters').optional(),
+});
+
+export const parseVoiceSchema = z.object({
+  transcript: z.string().min(1, 'Transcript is required'),
+});
+
+export const parseAudioSchema = z.object({
+  audioBase64: z.string().min(1, 'Audio data is required'),
+  mimeType: z.string().optional().default('audio/webm'),
+});
+
+export const parsedSlotSchema = z.object({
+  slots: z.array(
+    z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+      startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Start time must be in HH:mm format'),
+      endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'End time must be in HH:mm format'),
+      isRecurring: z.boolean().default(false),
+    })
+  )
 });

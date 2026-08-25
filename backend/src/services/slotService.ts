@@ -99,9 +99,17 @@ export const slotService = {
    * Fetches availability slots for a specific lecturer.
    */
   async getLecturerSlots(lecturerId: string, status?: SlotStatusType) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    await prisma.availabilitySlot.deleteMany({
+      where: {
+        date: { lt: todayStr },
+      },
+    });
+
     return await prisma.availabilitySlot.findMany({
       where: {
         lecturerId,
+        date: { gte: todayStr },
         ...(status ? { status } : {}),
       },
       include: {

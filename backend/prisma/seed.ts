@@ -27,14 +27,14 @@ async function main() {
   await prisma.availabilitySlot.deleteMany();
   await prisma.user.deleteMany();
 
-  const defaultPassword = 'password123';
+  const defaultPassword = 'qwerty123';
   const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
   // 1. Create Lecturers
   const lecturer1 = await prisma.user.create({
     data: {
-      name: 'Dr. Kwabena Mensah',
-      email: 'dr.mensah@knust.edu.gh',
+      name: 'Dr. Yacoub Yusuf',
+      email: 'yacoubyusuf41@gmail.com',
       passwordHash,
       role: Role.LECTURER,
       department: 'Computer Science',
@@ -64,8 +64,8 @@ async function main() {
   // 2. Create Students
   const student1 = await prisma.user.create({
     data: {
-      name: 'Kwame Appiah',
-      email: 'kwame.appiah@st.knust.edu.gh',
+      name: 'Yacoub',
+      email: 'yacoubbinabdulrahman123@gmail.com',
       passwordHash,
       role: Role.STUDENT,
       department: 'Computer Science',
@@ -106,7 +106,7 @@ async function main() {
   const dayAfterTomorrow = formatDate(2);
   const nextWeekDate = formatDate(7);
 
-  // 3. Create Slots & Bookings for Lecturer 1 (Dr. Mensah)
+  // 3. Create Slots & Bookings for Lecturer 1 (Dr. Yacoub Yusuf)
   await prisma.availabilitySlot.create({
     data: {
       lecturerId: lecturer1.id,
@@ -144,6 +144,7 @@ async function main() {
     data: {
       slotId: slot2.id,
       studentId: student1.id,
+      subject: 'Final Year Project Consultation',
       status: BookingStatus.CONFIRMED,
     },
   });
@@ -175,6 +176,7 @@ async function main() {
     data: {
       slotId: slot3.id,
       studentId: student2.id,
+      subject: 'Course Assignment Discussion',
       status: BookingStatus.CONFIRMED,
     },
   });
@@ -217,6 +219,7 @@ async function main() {
     data: {
       slotId: slot4.id,
       studentId: student3.id,
+      subject: 'Exam Preparation Clarification',
       status: BookingStatus.CONFIRMED,
     },
   });
@@ -224,13 +227,13 @@ async function main() {
   console.log('\n=============================================================');
   console.log('🎉 KNUSTCONSULT SEEDING COMPLETED SUCCESSFULLY!');
   console.log('=============================================================\n');
-  console.log('🔑 DEMO USER CREDENTIALS (Default Password: "password123"):\n');
+  console.log('🔑 DEMO USER CREDENTIALS (Default Password: "qwerty123"):\n');
   console.log('--- LECTURERS ---');
-  console.log(`1. Dr. Kwabena Mensah  (Computer Science)        : dr.mensah@knust.edu.gh`);
+  console.log(`1. Dr. Yacoub Yusuf    (Computer Science)        : yacoubyusuf41@gmail.com`);
   console.log(`2. Prof. Ama Serwaa     (Electrical Engineering)  : prof.serwaa@knust.edu.gh`);
   console.log(`3. Dr. Yaw Osei        (Mathematics & Stats)     : dr.osei@knust.edu.gh\n`);
   console.log('--- STUDENTS ---');
-  console.log(`1. Kwame Appiah        (Computer Science)        : kwame.appiah@st.knust.edu.gh`);
+  console.log(`1. Yacoub              (Computer Science)        : yacoubbinabdulrahman123@gmail.com`);
   console.log(`2. Abena Owusu         (Electrical Engineering)  : abena.owusu@st.knust.edu.gh`);
   console.log(`3. Kofi Boakye         (Mathematics & Stats)     : kofi.boakye@st.knust.edu.gh`);
   console.log('=============================================================\n');

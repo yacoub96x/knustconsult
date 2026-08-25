@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { bookingService } from '../services/bookingService.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -8,6 +9,9 @@ const prisma = new PrismaClient();
 // GET /api/lecturers
 router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    await bookingService.cleanExpiredSlotsAndBookings();
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const searchParam = req.query.search;
     const search = typeof searchParam === 'string' ? searchParam : undefined;
 
@@ -35,7 +39,10 @@ router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =>
         _count: {
           select: {
             slots: {
-              where: { status: 'OPEN' },
+              where: {
+                status: 'OPEN',
+                date: { gte: todayStr },
+              },
             },
           },
         },
@@ -53,6 +60,8 @@ router.get('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =>
 // GET /api/lecturers/:id/slots
 router.get('/:id/slots', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    await bookingService.cleanExpiredSlotsAndBookings();
+    const todayStr = new Date().toISOString().split('T')[0];
     const lecturerId = req.params.id as string;
 
     const lecturer = await prisma.user.findUnique({
@@ -64,15 +73,18 @@ router.get('/:id/slots', requireAuth, async (req: AuthenticatedRequest, res: Res
       return res.status(404).json({ error: 'Lecturer not found' });
     }
 
-    const openSlots = await prisma.availabilitySlot.findMany({
+    // Return OPEN, PENDING, and BOOKED slots so the student timetable grid
+    // can show all active slot states and block requests on already-pending slots.
+    const activeSlots = await prisma.availabilitySlot.findMany({
       where: {
         lecturerId,
-        status: 'OPEN',
+        status: { in: ['OPEN', 'PENDING', 'BOOKED'] },
+        date: { gte: todayStr },
       },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
-    return res.json({ lecturer, slots: openSlots });
+    return res.json({ lecturer, slots: activeSlots });
   } catch (err) {
     console.error('Error fetching lecturer slots:', err);
     return res.status(500).json({ error: 'Failed to retrieve lecturer availability slots' });

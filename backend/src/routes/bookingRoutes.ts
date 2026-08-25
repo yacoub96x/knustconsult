@@ -14,10 +14,10 @@ router.post('/', requireAuth, requireRole('STUDENT'), async (req: AuthenticatedR
       return res.status(400).json({ error: issue.message, field: issue.path[0]?.toString() });
     }
 
-    const { slotId } = parseResult.data;
+    const { slotId, subject } = parseResult.data;
     const studentId = req.user!.id;
 
-    const booking = await bookingService.bookSlot(slotId, studentId);
+    const booking = await bookingService.bookSlot(slotId, studentId, subject);
 
     return res.status(201).json({
       message: 'Booking request submitted — awaiting lecturer approval',
@@ -69,6 +69,21 @@ router.post('/:id/reject', requireAuth, requireRole('LECTURER'), async (req: Aut
     console.error('Error rejecting booking:', err);
     const statusCode = err.statusCode || 400;
     return res.status(statusCode).json({ error: err.message || 'Failed to reject booking' });
+  }
+});
+
+// DELETE /api/bookings/:id/clear (Student or Lecturer - delete CANCELLED or REJECTED booking)
+router.delete('/:id/clear', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const bookingId = req.params.id as string;
+    const userId = req.user!.id;
+
+    const result = await bookingService.deleteCancelledBooking(bookingId, userId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Error deleting cancelled booking:', err);
+    const statusCode = err.statusCode || 400;
+    return res.status(statusCode).json({ error: err.message || 'Failed to delete cancelled booking' });
   }
 });
 

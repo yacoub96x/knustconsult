@@ -19,11 +19,26 @@ export const BookingStatus = {
 
 export const bookingService = {
   /**
-   * Atomically creates a PENDING booking request for a student.
+   * Automatically purges slots and bookings whose date is prior to today.
+   */
+  async cleanExpiredSlotsAndBookings() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    // Delete slots with dates earlier than today. Associated bookings will cascade delete.
+    await prisma.availabilitySlot.deleteMany({
+      where: {
+        date: { lt: todayStr },
+      },
+    });
+  },
+
+  /**
+   * Atomically creates a PENDING booking request for a student with an optional subject.
    * Sets the slot to PENDING so no other student can request it simultaneously.
    * Uses a transaction + unique DB constraint to guarantee race-safety.
    */
-  async bookSlot(slotId: string, studentId: string) {
+  async bookSlot(slotId: string, studentId: string, subject?: string) {
+    await this.cleanExpiredSlotsAndBookings();
+
     const result = await prisma.$transaction(async (tx) => {
       const slot = await tx.availabilitySlot.findUnique({
         where: { id: slotId },
@@ -56,6 +71,7 @@ export const bookingService = {
         data: {
           slotId,
           studentId,
+          subject: subject ? subject.trim() : null,
           status: BookingStatus.PENDING,
         },
         include: {
@@ -196,8 +212,10 @@ export const bookingService = {
 
   /**
    * Fetches all bookings belonging to a specific student.
+   * Also cleans up expired past date slots & bookings.
    */
   async getStudentBookings(studentId: string) {
+    await this.cleanExpiredSlotsAndBookings();
     return await prisma.booking.findMany({
       where: { studentId },
       include: {
@@ -268,5 +286,38 @@ export const bookingService = {
       .catch(console.error);
 
     return { message: 'Booking cancelled successfully and slot reopened' };
+  },
+
+  /**
+   * Deletes a CANCELLED or REJECTED booking record permanently.
+   */
+  async deleteCancelledBooking(bookingId: string, userId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        slot: true,
+      },
+    });
+
+    if (!booking) {
+      throw { statusCode: 404, message: 'Booking not found' };
+    }
+
+    const isStudent = booking.studentId === userId;
+    const isLecturer = booking.slot?.lecturerId === userId;
+
+    if (!isStudent && !isLecturer) {
+      throw { statusCode: 403, message: 'Unauthorized to delete this booking record' };
+    }
+
+    if (booking.status !== BookingStatus.CANCELLED && booking.status !== BookingStatus.REJECTED) {
+      throw { statusCode: 400, message: 'Only cancelled or declined appointments can be deleted' };
+    }
+
+    await prisma.booking.delete({
+      where: { id: bookingId },
+    });
+
+    return { message: 'Cancelled appointment record deleted successfully' };
   },
 };
