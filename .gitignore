@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variable secrets (CRITICAL: DO NOT COMMIT)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+!**/.env.example
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Database files (SQLite)
+*.db
+*.db-journal
+*.sqlite
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# Temporary scratch and debug scripts
+scratch/
+scratch_*.ts
+scratch_*.js
+*.log
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

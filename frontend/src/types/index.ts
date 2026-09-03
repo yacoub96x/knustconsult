@@ -31,6 +31,7 @@ export interface Booking {
   id: string;
   slotId: string;
   studentId: string;
+  subject?: string | null;
   status: BookingStatus;
   createdAt: string;
   slot?: AvailabilitySlot;

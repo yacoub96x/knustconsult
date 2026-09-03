@@ -1,9 +1,29 @@
 import { Router, Response } from 'express';
 import { requireAuth, requireRole, AuthenticatedRequest } from '../middleware/auth.js';
-import { createSlotSchema } from '../utils/validation.js';
+import { createSlotSchema, parseVoiceSchema } from '../utils/validation.js';
 import { slotService } from '../services/slotService.js';
+import { voiceService } from '../services/voiceService.js';
 
 const router = Router();
+
+// POST /api/slots/parse-voice (Lecturer only)
+router.post('/parse-voice', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parseResult = parseVoiceSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: parseResult.error.issues[0].message });
+    }
+
+    const { transcript } = parseResult.data;
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    const result = await voiceService.parseVoiceTranscript(transcript, currentDate);
+    return res.json({ transcript: result.transcript, slots: result.slots });
+  } catch (err: any) {
+    console.error('Error parsing voice:', err);
+    return res.status(400).json({ error: err.message || 'Could not parse availability from that. Try rephrasing or enter manually.' });
+  }
+});
 
 // POST /api/slots (Lecturer only)
 router.post('/', requireAuth, requireRole('LECTURER'), async (req: AuthenticatedRequest, res: Response) => {

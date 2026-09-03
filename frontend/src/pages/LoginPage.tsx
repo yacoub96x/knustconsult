@@ -33,7 +33,7 @@ export const LoginPage: React.FC = () => {
 
   const fillDemoUser = (demoEmail: string) => {
     setEmail(demoEmail);
-    setPassword('password123');
+    setPassword('qwerty123');
     setError(null);
   };
 
@@ -116,23 +116,23 @@ export const LoginPage: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 Quick Demo Logins
               </span>
-              <span className="text-[10px] text-zinc-400">(Pass: password123)</span>
+              <span className="text-[10px] text-zinc-400">(Pass: qwerty123)</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fillDemoUser('dr.mensah@knust.edu.gh')}
+                onClick={() => fillDemoUser('yacoubyusuf41@gmail.com')}
                 className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-amber-500/50 text-left transition text-xs group"
               >
-                <div className="font-semibold text-zinc-900 dark:text-white group-hover:text-amber-500">Dr. Mensah</div>
+                <div className="font-semibold text-zinc-900 dark:text-white group-hover:text-amber-500">Dr Yacoub Yusuf</div>
                 <div className="text-[10px] text-zinc-400">Lecturer • CS</div>
               </button>
               <button
                 type="button"
-                onClick={() => fillDemoUser('kwame.appiah@st.knust.edu.gh')}
+                onClick={() => fillDemoUser('yacoubbinabdulrahman123@gmail.com')}
                 className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-emerald-500/50 text-left transition text-xs group"
               >
-                <div className="font-semibold text-zinc-900 dark:text-white group-hover:text-emerald-500">Kwame Appiah</div>
+                <div className="font-semibold text-zinc-900 dark:text-white group-hover:text-emerald-500">Yacoub</div>
                 <div className="text-[10px] text-zinc-400">Student • CS</div>
               </button>
             </div>

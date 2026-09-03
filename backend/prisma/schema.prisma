@@ -44,6 +44,7 @@ model Booking {
   slot      AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
   studentId String
   student   User     @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
+  subject   String?  // Optional meeting subject / topic provided by student
   status    String   @default("PENDING") // "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED"
   createdAt DateTime @default(now())
 }
