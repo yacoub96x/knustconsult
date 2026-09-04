@@ -25,6 +25,9 @@ router.post('/', requireAuth, requireRole('STUDENT'), async (req: AuthenticatedR
     });
   } catch (err: any) {
     console.error('Error booking slot:', err);
+    if (err.code === 'P2003') {
+      return res.status(400).json({ error: 'The specified slot or user account no longer exists. Please refresh or log in again.' });
+    }
     const statusCode = err.statusCode || 500;
     return res.status(statusCode).json({ error: err.message || 'Failed to book slot' });
   }

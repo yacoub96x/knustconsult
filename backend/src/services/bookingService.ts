@@ -61,6 +61,14 @@ export const bookingService = {
         throw { statusCode: 409, message: 'This slot has already been requested' };
       }
 
+      const student = await tx.user.findUnique({
+        where: { id: studentId },
+      });
+
+      if (!student) {
+        throw { statusCode: 401, message: 'Student account not found. Please log out and log in again.' };
+      }
+
       // Lock the slot so no one else can request it
       await tx.availabilitySlot.update({
         where: { id: slotId },
