@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, CookieOptions } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
@@ -9,10 +9,10 @@ const router = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'knust_consult_secret_jwt_key_2026_super_secure';
 
-const COOKIE_OPTIONS = {
+const COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -110,7 +110,7 @@ router.post('/login', async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (_req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', COOKIE_OPTIONS);
   return res.json({ message: 'Logged out successfully' });
 });
 

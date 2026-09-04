@@ -755,9 +755,10 @@ export const LecturerDashboard: React.FC = () => {
 
       {/* Publish Availability Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-md">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-zinc-950/60 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl max-h-[90vh] flex flex-col my-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between flex-shrink-0 pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
               <div>
                 <p className="text-[10px] uppercase font-mono text-amber-500 font-bold tracking-wider">
                   DEPARTURE TIMETABLE
@@ -767,212 +768,219 @@ export const LecturerDashboard: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => { stopSpeechRecognition(); setShowModal(false); }}
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white p-1 text-lg leading-none"
+                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-lg leading-none"
               >
                 ✕
               </button>
             </div>
 
-            {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
+            {/* Modal Form Container */}
+            <form onSubmit={handleCreateSlot} className="flex flex-col flex-1 min-h-0 mt-4">
+              {/* Scrollable Form Content */}
+              <div className="flex-1 overflow-y-auto pr-1.5 space-y-4">
+                {formError && (
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
 
-            {/* Voice & Text Input Section */}
-            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-500/20 rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    AI Voice & Text Parsing
-                  </h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    Speak or type your availability naturally (e.g. "Tomorrow 10am to 12pm").
-                  </p>
-                  {isListening && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[11px] font-bold animate-pulse mt-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                      Recording ({7 - recordingSeconds}s remaining)
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleVoiceInput}
-                  disabled={isParsingVoice}
-                  title={isListening ? "Click to stop listening and parse now" : "Click to start voice recognition"}
-                  className={`relative overflow-hidden flex items-center justify-center w-10 h-10 rounded-full transition-all ${
-                    isListening
-                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30 ring-4 ring-rose-500/20'
-                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:text-amber-500 shadow-sm'
-                  } ${isParsingVoice ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isListening ? (
-                    <>
-                      <span className="absolute inset-0 rounded-full animate-ping bg-rose-500 opacity-20"></span>
-                      <MicOff className="w-4 h-4" />
-                    </>
-                  ) : isParsingVoice ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Mic className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={voiceTranscript}
-                  onChange={(e) => setVoiceTranscript(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      processTextTranscript(voiceTranscript);
-                    }
-                  }}
-                  placeholder={
-                    isListening
-                      ? `Listening (${recordingSeconds}s)... Speak or click mic to finish!`
-                      : isParsingVoice
-                      ? "AI is analyzing your speech..."
-                      : "e.g. Tomorrow from 2pm to 4pm every week"
-                  }
-                  className="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => processTextTranscript(voiceTranscript)}
-                  disabled={isParsingVoice || !voiceTranscript.trim()}
-                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:hover:bg-amber-500 text-zinc-950 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm flex-shrink-0"
-                >
-                  {isParsingVoice ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  Parse AI
-                </button>
-              </div>
-
-              {/* Display AI Transcribed / Parsed Text Badge */}
-              {voiceTranscript.trim() !== '' && (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 dark:text-amber-300">
-                    <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      AI Transcribed Text:
-                    </span>
+                {/* Voice & Text Input Section */}
+                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-500/20 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-amber-500" />
+                        AI Voice & Text Parsing
+                      </h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                        Speak or type your availability naturally (e.g. "Tomorrow 10am to 12pm").
+                      </p>
+                      {isListening && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[11px] font-bold animate-pulse mt-1.5">
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                          Recording ({7 - recordingSeconds}s remaining)
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setVoiceTranscript('')}
-                      className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 underline"
+                      onClick={handleVoiceInput}
+                      disabled={isParsingVoice}
+                      title={isListening ? "Click to stop listening and parse now" : "Click to start voice recognition"}
+                      className={`relative overflow-hidden flex items-center justify-center w-10 h-10 rounded-full transition-all flex-shrink-0 ${
+                        isListening
+                          ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30 ring-4 ring-rose-500/20'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-amber-500 hover:text-amber-500 shadow-sm'
+                      } ${isParsingVoice ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      Clear
+                      {isListening ? (
+                        <>
+                          <span className="absolute inset-0 rounded-full animate-ping bg-rose-500 opacity-20"></span>
+                          <MicOff className="w-4 h-4" />
+                        </>
+                      ) : isParsingVoice ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
-                  <p className="font-mono text-xs bg-white/80 dark:bg-zinc-950/80 p-2 rounded-lg border border-amber-500/20 break-words text-zinc-800 dark:text-zinc-200">
-                    "{voiceTranscript}"
-                  </p>
-                </div>
-              )}
-            </div>
 
-            <form onSubmit={handleCreateSlot} className="space-y-4">
-              <div className="max-h-[50vh] overflow-y-auto pr-1 space-y-4">
-                {draftSlots.map((draft, index) => (
-                  <div key={draft.id} className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4 relative">
-                    {draftSlots.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDraft(draft.id)}
-                        className="absolute -top-2 -right-2 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 p-1.5 rounded-full hover:bg-rose-200 transition shadow-sm"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    
-                    <div>
-                      <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
-                        Date {draftSlots.length > 1 ? `#${index + 1}` : ''}
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={draft.date}
-                        onChange={(e) => updateDraft(draft.id, { date: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
-                          Start Time
-                        </label>
-                        <input
-                          type="time"
-                          required
-                          value={draft.startTime}
-                          onChange={(e) => updateDraft(draft.id, { startTime: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
-                          End Time
-                        </label>
-                        <input
-                          type="time"
-                          required
-                          value={draft.endTime}
-                          onChange={(e) => updateDraft(draft.id, { endTime: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-1">
-                      <label className="flex items-center space-x-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={draft.isRecurring}
-                          onChange={(e) => updateDraft(draft.id, { isRecurring: e.target.checked })}
-                          className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-white dark:focus:ring-offset-zinc-900"
-                        />
-                        <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                          Repeat weekly for consecutive weeks
-                        </span>
-                      </label>
-                    </div>
-
-                    {draft.isRecurring && (
-                      <div>
-                        <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
-                          Number of Weeks (1 - 12)
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          max={12}
-                          value={draft.recurringWeeks}
-                          onChange={(e) => updateDraft(draft.id, { recurringWeeks: Number(e.target.value) })}
-                          className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
-                        />
-                      </div>
-                    )}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={voiceTranscript}
+                      onChange={(e) => setVoiceTranscript(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          processTextTranscript(voiceTranscript);
+                        }
+                      }}
+                      placeholder={
+                        isListening
+                          ? `Listening (${recordingSeconds}s)... Speak or click mic to finish!`
+                          : isParsingVoice
+                          ? "AI is analyzing your speech..."
+                          : "e.g. Tomorrow from 2pm to 4pm every week"
+                      }
+                      className="flex-1 px-3.5 py-2 text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => processTextTranscript(voiceTranscript)}
+                      disabled={isParsingVoice || !voiceTranscript.trim()}
+                      className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:hover:bg-amber-500 text-zinc-950 font-semibold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm flex-shrink-0"
+                    >
+                      {isParsingVoice ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      Parse AI
+                    </button>
                   </div>
-                ))}
+
+                  {/* Display AI Transcribed / Parsed Text Badge */}
+                  {voiceTranscript.trim() !== '' && (
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                        <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px]">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                          AI Transcribed Text:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setVoiceTranscript('')}
+                          className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <p className="font-mono text-xs bg-white/80 dark:bg-zinc-950/80 p-2 rounded-lg border border-amber-500/20 break-words text-zinc-800 dark:text-zinc-200">
+                        "{voiceTranscript}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Draft Slots List */}
+                <div className="space-y-4">
+                  {draftSlots.map((draft, index) => (
+                    <div key={draft.id} className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 space-y-4 relative">
+                      {draftSlots.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDraft(draft.id)}
+                          className="absolute -top-2 -right-2 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 p-1.5 rounded-full hover:bg-rose-200 transition shadow-sm"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      
+                      <div>
+                        <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                          Date {draftSlots.length > 1 ? `#${index + 1}` : ''}
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={draft.date}
+                          onChange={(e) => updateDraft(draft.id, { date: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                            Start Time
+                          </label>
+                          <input
+                            type="time"
+                            required
+                            value={draft.startTime}
+                            onChange={(e) => updateDraft(draft.id, { startTime: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                            End Time
+                          </label>
+                          <input
+                            type="time"
+                            required
+                            value={draft.endTime}
+                            onChange={(e) => updateDraft(draft.id, { endTime: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-1">
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={draft.isRecurring}
+                            onChange={(e) => updateDraft(draft.id, { isRecurring: e.target.checked })}
+                            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-amber-500 focus:ring-amber-500 focus:ring-offset-white dark:focus:ring-offset-zinc-900"
+                          />
+                          <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                            Repeat weekly for consecutive weeks
+                          </span>
+                        </label>
+                      </div>
+
+                      {draft.isRecurring && (
+                        <div>
+                          <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                            Number of Weeks (1 - 12)
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={12}
+                            value={draft.recurringWeeks}
+                            onChange={(e) => updateDraft(draft.id, { recurringWeeks: Number(e.target.value) })}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500 transition text-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addDraft}
+                  className="w-full py-2.5 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add another slot manually
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={addDraft}
-                className="w-full py-2 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition flex items-center justify-center gap-2"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add another slot manually
-              </button>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              {/* Fixed Footer with Cancel & Publish buttons */}
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-zinc-200 dark:border-zinc-800 flex-shrink-0 mt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
