@@ -1,60 +1,15 @@
 import 'dotenv/config';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : undefined;
-const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@knust.edu.gh';
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-let transporter: nodemailer.Transporter | null = null;
-let etherealInitPromise: Promise<void> | null = null;
+const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'onboarding@resend.dev';
 
-// Initialize Transporter
-if (smtpHost && smtpUser && smtpPass) {
-  if (smtpHost.includes('gmail')) {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-  } else {
-    transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: Number(process.env.SMTP_PORT || smtpPort) === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 20000,
-    });
-  }
-  console.log(`📧 Email Service: Configured SMTP server (${smtpHost}) for ${smtpUser}`);
+if (resend) {
+  console.log('📧 Email Service: Configured Resend HTTP API client');
 } else {
-  // Automatically generate Ethereal test account if no real SMTP is configured
-  etherealInitPromise = nodemailer
-    .createTestAccount()
-    .then((account) => {
-      transporter = nodemailer.createTransport({
-        host: account.smtp.host,
-        port: account.smtp.port,
-        secure: account.smtp.secure,
-        auth: {
-          user: account.user,
-          pass: account.pass,
-        },
-      });
-      console.log('📧 Email Service: Configured auto Ethereal test account');
-      console.log(`   Test User: ${account.user}`);
-    })
-    .catch((err) => {
-      console.error('⚠️ Could not create Ethereal test account, falling back to offline console log:', err.message);
-    });
+  console.log('📧 Email Service: No RESEND_API_KEY provided — running in offline console log mode');
 }
 
 interface NotificationDetails {
@@ -111,11 +66,9 @@ function getKnustHtmlTemplate(title: string, contentHtml: string): string {
 }
 
 async function sendMail(to: string | string[], subject: string, text: string, html?: string): Promise<void> {
-  if (etherealInitPromise) {
-    await etherealInitPromise;
-  }
+  const emailHtml = html || text.replace(/\n/g, '<br>');
 
-  if (!transporter) {
+  if (!resend) {
     const recipients = Array.isArray(to) ? to.join(', ') : to;
     console.log('\n✉️  [OFFLINE EMAIL LOG]');
     console.log(`TO      : ${recipients}`);
@@ -126,24 +79,17 @@ async function sendMail(to: string | string[], subject: string, text: string, ht
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: smtpFrom,
+    const data = await resend.emails.send({
+      from: emailFrom,
       to,
       subject,
-      text,
-      html: html || text.replace(/\n/g, '<br>'),
+      html: emailHtml,
     });
 
     const recipients = Array.isArray(to) ? to.join(' & ') : to;
-    console.log(`✅ Email sent to ${recipients}`);
-
-    // If sent via Ethereal test account, print preview link
-    const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) {
-      console.log(`🔗 Preview Email Link: ${previewUrl}\n`);
-    }
-  } catch (err) {
-    console.error('⚠️ Failed to send email via SMTP, logging fallback:', err);
+    console.log(`✅ Email sent via Resend to ${recipients} (ID: ${data.data?.id || 'success'})`);
+  } catch (err: any) {
+    console.error('⚠️ Failed to send email via Resend, logging fallback:', err?.message || err);
     console.log(`[OFFLINE FALLBACK] ${subject} -> ${Array.isArray(to) ? to.join(', ') : to}`);
   }
 }
