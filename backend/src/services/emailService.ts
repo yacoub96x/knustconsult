@@ -2,7 +2,7 @@ import 'dotenv/config';
 import nodemailer from 'nodemailer';
 
 const smtpHost = process.env.SMTP_HOST;
-const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10);
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : undefined;
 const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@knust.edu.gh';
@@ -24,11 +24,14 @@ if (smtpHost && smtpUser && smtpPass) {
     transporter = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465,
+      secure: Number(process.env.SMTP_PORT || smtpPort) === 465,
       auth: {
         user: smtpUser,
         pass: smtpPass,
       },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
     });
   }
   console.log(`📧 Email Service: Configured SMTP server (${smtpHost}) for ${smtpUser}`);
